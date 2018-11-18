@@ -13,7 +13,7 @@ if sys.version_info[0] >= 3:
     raw_input = input
 
 tokens = ('NUM', 'NAME', 'IF', 'ELSE', 'DO', 'WHILE', 'ASSIGN')
-literals = ['+', '*', '(', ')', '-', '/']
+literals = ['+', '*', '(', ')', '-', '/', ';']
 
 t_NAME = r'[a-zA-Z_][a-zA-Z0-9_]*'
 t_DO = r'$DO'
@@ -42,6 +42,9 @@ lex.lex()
 
 ########################################################################################
 # BNF FOR RUSH
+#
+#<statement> ::= <expr> ";"
+#
 # <expr> ::- <term> '+' <expr>
 #        | <term> '-' <expr>
 #        |   <term>
@@ -80,6 +83,11 @@ def get_var_value_helper(node):
         return 0
 
 ############################ PARSER FUNCTIONS ###########################################
+# STATEMENT
+def p_statement_exp(p):
+    'statement : expr ";"'
+    p[0] = p[1]
+
 # EXPRESSION
 def p_expr_term(p):
     'expr : term'
