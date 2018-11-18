@@ -54,6 +54,7 @@ lex.lex()
 #<statement> ::= <expr> ";"
 #            | <block>
 #            | PRINT <statement>
+#            | DO <statement> WHILE "(" <expr> ")"
 #
 # <block> ::= "{" <block_content> "}"
 #         | "{" "}"
@@ -127,6 +128,13 @@ def print_interp_helper(node):
     print '"' + str(result) + '"'
     return result
 
+# DO WHILE
+def do_while_interp_helper(node):
+    result = 0
+    while True:
+        result = node.children[0].interp()
+        if not node.children[1].interp(): break
+
 ############################ PARSER FUNCTIONS ###########################################
 # PROGRAM
 def p_program_block_item_list(p):
@@ -162,6 +170,13 @@ def p_statement_print(p):
     p[0].text = "PRINT"
     p[0].children = [p[2]]
     p[0].function = print_interp_helper
+
+def p_statement_do_while(p):
+    ' statement : DO statement WHILE "(" expr ")"'
+    p[0] = Node()
+    p[0].text = "WHILE"
+    p[0].children = [p[2], p[5]]
+    p[0].function = do_while_interp_helper
 
 # BLOCK
 def p_block_empty(p):
@@ -266,7 +281,6 @@ yacc.yacc()
 if 1 < len(sys.argv):
     with open(sys.argv[1], 'r') as myfile:
         data=myfile.read()
-    print data
     resultNode = yacc.parse(data+'\n') # parse returns None upon error
     if None != resultNode:
         print resultNode.interp()
