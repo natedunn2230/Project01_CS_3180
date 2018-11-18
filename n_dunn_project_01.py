@@ -12,7 +12,7 @@ sys.path.insert(0,"../..")
 if sys.version_info[0] >= 3:
     raw_input = input
 
-tokens = ('NUM', 'NAME', 'IF', 'ELSE', 'DO', 'WHILE', 'ASSIGN', 'TRUE', 'FALSE',)
+tokens = ('NUM', 'NAME', 'IF', 'ELSE', 'DO', 'WHILE', 'ASSIGN', 'PRINT', 'TRUE', 'FALSE',)
 literals = ['+', '*', '-', '/', '{', '}', '(', ')', ';']
 
 t_NAME = r'[a-zA-Z_][a-zA-Z0-9_]*'
@@ -23,6 +23,7 @@ t_WHILE = r'\$WHILE'
 t_IF = r'\$IF'
 t_ELSE = r'\$ELSE'
 t_ASSIGN = r':='
+t_PRINT = r'\$PRINT'
 t_ignore = " \t\r"
 
 def t_NUM(t):
@@ -52,6 +53,7 @@ lex.lex()
 #
 #<statement> ::= <expr> ";"
 #            | <block>
+#            | PRINT <statement>
 #
 # <block> ::= "{" <block_content> "}"
 #         | "{" "}"
@@ -74,7 +76,7 @@ lex.lex()
 class Node:
     symbols = { }
     symbolStack = []
-    
+
     def __init__(self):
         self.children = []
         self.text = "invalid"
@@ -119,6 +121,12 @@ def get_var_value_helper(node):
         print("Undefined name '%s'" % node.text)
         return 0
 
+#PRINT
+def print_interp_helper(node):
+    result = node.children[0].interp()
+    print '"' + str(result) + '"'
+    return result
+
 ############################ PARSER FUNCTIONS ###########################################
 # PROGRAM
 def p_program_block_item_list(p):
@@ -147,6 +155,13 @@ def p_statement_expr(p):
 def p_statement_block(p):
     ' statement : block '
     p[0] = p[1]
+
+def p_statement_print(p):
+    ' statement : PRINT statement '
+    p[0] = Node()
+    p[0].text = "PRINT"
+    p[0].children = [p[2]]
+    p[0].function = print_interp_helper
 
 # BLOCK
 def p_block_empty(p):
