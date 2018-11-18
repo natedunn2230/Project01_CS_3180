@@ -13,7 +13,7 @@ if sys.version_info[0] >= 3:
     raw_input = input
 
 tokens = ('NUM', 'NAME', 'IF', 'ELSE', 'DO', 'WHILE', 'ASSIGN', 'TRUE', 'FALSE',)
-literals = ['+', '*', '(', ')', '-', '/', ';']
+literals = ['+', '*', '-', '/', '{', '}', '(', ')', ';']
 
 t_NAME = r'[a-zA-Z_][a-zA-Z0-9_]*'
 t_DO = r'\$DO'
@@ -51,6 +51,10 @@ lex.lex()
 #                 | <block_content> <statement>
 #
 #<statement> ::= <expr> ";"
+#            | <block>
+#
+# <block> ::= "{" <block_content> "}"
+#         | "{" "}"
 #
 # <expr> ::- <term> '+' <expr>
 #        | <term> '-' <expr>
@@ -69,6 +73,7 @@ lex.lex()
 ########################################################################################
 class Node:
     symbols = { }
+    symbolStack = []
     
     def __init__(self):
         self.children = []
@@ -78,12 +83,28 @@ class Node:
     def interp(self):
         """ Interprets the parse tree rooted at self """
         return self.function(self)
+
+class BlockNode(Node):
+    def __init__(self):
+        Node.__init__(self)
+        self.localVars = {}
+        self.capturedVars = {}
+
 ############################ HELPERS ####################################################
 # PROGRAM
 def program_interp_helper(node):
     result = 0
     for child in node.children :
         result = child.interp()
+    return result
+
+# BLOCK
+def block_interp_helper(node):
+    Node.symbolStack.append(node.localVars)
+    result = 0
+    for child in node.children :
+        result = child.interp()
+    Node.symbolStack.pop()
     return result
 
 # ASSIGNMENT
@@ -119,9 +140,28 @@ def p_block_content_compound(p):
     p[0].append(p[2])
 
 # STATEMENT
-def p_statement_exp(p):
+def p_statement_expr(p):
     'statement : expr ";"'
     p[0] = p[1]
+
+def p_statement_block(p):
+    ' statement : block '
+    p[0] = p[1]
+
+# BLOCK
+def p_block_empty(p):
+    ' block : "{" "}" '
+    p[0] = BlockNode()
+    p[0].text = "block"
+    p[0].children = []
+    p[0].function = lambda node: 0
+
+def p_block_with_list(p):
+    ' block : "{" block_content "}" '
+    p[0] = BlockNode()
+    p[0].text = "block"
+    p[0].children = p[2]
+    p[0].function = block_interp_helper
 
 # EXPRESSION
 def p_expr_term(p):
