@@ -12,14 +12,16 @@ sys.path.insert(0,"../..")
 if sys.version_info[0] >= 3:
     raw_input = input
 
-tokens = ('NUM', 'NAME', 'IF', 'ELSE', 'DO', 'WHILE', 'ASSIGN')
+tokens = ('NUM', 'NAME', 'IF', 'ELSE', 'DO', 'WHILE', 'ASSIGN', 'TRUE', 'FALSE',)
 literals = ['+', '*', '(', ')', '-', '/', ';']
 
 t_NAME = r'[a-zA-Z_][a-zA-Z0-9_]*'
-t_DO = r'$DO'
-t_WHILE = r'$WHILE'
-t_IF = r'$IF'
-t_ELSE = r'$ELSE'
+t_DO = r'\$DO'
+t_TRUE = r'\$TRUE'
+t_FALSE = r'\$FALSE'
+t_WHILE = r'\$WHILE'
+t_IF = r'\$IF'
+t_ELSE = r'\$ELSE'
 t_ASSIGN = r':='
 t_ignore = " \t\r"
 
@@ -47,7 +49,7 @@ lex.lex()
 #
 # <expr> ::- <term> '+' <expr>
 #        | <term> '-' <expr>
-#        |   <term>
+#        | <term>
 #        | NAME ASSIGN <expr>
 #
 # <term> ::- <factor> '*' <term>
@@ -57,6 +59,8 @@ lex.lex()
 # <factor> ::- '(' <expr> ')'
 #        | NUM
 #        | NAME
+#        | TRUE
+#        | FALSE
 ########################################################################################
 class Node:
     symbols = { }
@@ -149,6 +153,18 @@ def p_factor_name(p):
     p[0] = Node()
     p[0].text = p[1]
     p[0].function = lambda node: get_var_value_helper(node)
+
+def p_factor_true(p):
+    ''' factor : TRUE '''
+    p[0] = Node()
+    p[0].text = p[1]
+    p[0].function = lambda node: True
+
+def p_factor_false(p):
+    ''' factor : FALSE '''
+    p[0] = Node()
+    p[0].text = p[1]
+    p[0].function = lambda node: False
 
 # ERROR
 def p_error(p):
