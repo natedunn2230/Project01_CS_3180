@@ -45,6 +45,11 @@ lex.lex()
 ########################################################################################
 # BNF FOR RUSH
 #
+# <program> ::= <block_content>
+# 
+# <block_content> ::= <statement>
+#                 | <block_content> <statement>
+#
 #<statement> ::= <expr> ";"
 #
 # <expr> ::- <term> '+' <expr>
@@ -74,7 +79,14 @@ class Node:
         """ Interprets the parse tree rooted at self """
         return self.function(self)
 ############################ HELPERS ####################################################
+# PROGRAM
+def program_interp_helper(node):
+    result = 0
+    for child in node.children :
+        result = child.interp()
+    return result
 
+# ASSIGNMENT
 def set_var_value_helper(node):
     Node.symbols[node.children[0]] = node.children[1].interp()
     return Node.symbols[node.children[0]]
@@ -87,6 +99,25 @@ def get_var_value_helper(node):
         return 0
 
 ############################ PARSER FUNCTIONS ###########################################
+# PROGRAM
+def p_program_block_item_list(p):
+    '''program : block_content '''
+    p[0] = Node()
+    p[0].children = p[1]
+    p[0].text = 'program'
+    p[0].function = program_interp_helper
+
+
+#BLOCK CONTENT
+def p_block_content_statement(p):
+    ' block_content : statement '
+    p[0] = [p[1]]
+
+def p_block_content_compound(p):
+    ' block_content : block_content statement'
+    p[0] = p[1]
+    p[0].append(p[2])
+
 # STATEMENT
 def p_statement_exp(p):
     'statement : expr ";"'
