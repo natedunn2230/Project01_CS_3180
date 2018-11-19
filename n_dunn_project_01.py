@@ -2,7 +2,10 @@
 # Nathan Dunn
 # CS 3180
 # Project 1
-# RUSH lang 
+# RUSH LANG
+# RUSH supports basic arithmetic, variable assignments, do while loops and conditional if / if else statements.
+# I went a little overboard and added booleans as well.
+# In order to run test script.....: python n_dunn_project_01.py test.rsh
 ##############################################################################
 
 import sys
