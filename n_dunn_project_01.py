@@ -39,6 +39,9 @@ def t_error(t):
     print("Illegal character '%s'" % t.value[0])
     t.lexer.skip(1)
 
+def t_comment(t):
+    r'--.*'; pass
+
 # Build the lexer
 import ply.lex as lex
 lex.lex()
@@ -55,6 +58,8 @@ lex.lex()
 #            | <block>
 #            | PRINT <statement>
 #            | DO <statement> WHILE "(" <expr> ")"
+#            | IF "(" <expr> ")" <statment>
+#            | IF "(" <expr> ")" <statement> ELSE <statement>
 #
 # <block> ::= "{" <block_content> "}"
 #         | "{" "}"
@@ -133,7 +138,18 @@ def do_while_interp_helper(node):
     result = 0
     while True:
         result = node.children[0].interp()
-        if not node.children[1].interp(): break
+        if not node.children[1].interp(): return result
+
+# IF ELSE
+def if_interp_helper(node):
+    if node.children[0].interp():
+        return node.children[1].interp()
+
+def if_else_interp_helper(node):
+    if node.children[0].interp():
+        return node.children[1].interp()
+    else:
+        return node.children[2].interp()
 
 ############################ PARSER FUNCTIONS ###########################################
 # PROGRAM
@@ -174,9 +190,24 @@ def p_statement_print(p):
 def p_statement_do_while(p):
     ' statement : DO statement WHILE "(" expr ")"'
     p[0] = Node()
-    p[0].text = "WHILE"
+    p[0].text = "DO WHILE"
     p[0].children = [p[2], p[5]]
     p[0].function = do_while_interp_helper
+
+
+def p_statement_if(p):
+    ' statement : IF "(" expr ")" statement'
+    p[0] = Node()
+    p[0].text = "IF"
+    p[0].children = [p[3], p[5]]
+    p[0].function = if_interp_helper
+
+def p_statement_if_else(p):
+    ' statement : IF "(" expr ")" statement ELSE statement'
+    p[0] = Node()
+    p[0].text = "IF ELSE"
+    p[0].children = [p[3], p[5], p[7]]
+    p[0].function = if_else_interp_helper
 
 # BLOCK
 def p_block_empty(p):
